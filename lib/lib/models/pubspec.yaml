@@ -20,7 +20,6 @@ flutter:
   uses-material-design: true
 
   # Déclaration directe des images à la racine
+
   assets:
-    - Aigle.jpg
-    - Dauphin.jpg
-    - Lion.jpg
+    - assets/images/
