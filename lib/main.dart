@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'screens/game_screen.dart'; // Importation de l'écran de jeu
 
 void main() {
   runApp(const GameOfAdamApp());
@@ -66,7 +67,10 @@ class IntroVerseScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('La Création')),
+      appBar: AppBar(
+        title: const Text('La Création'),
+        backgroundColor: const Color(0xFF2E7D32),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -89,7 +93,16 @@ class IntroVerseScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
               ),
               onPressed: () {
-                // TODO: Navigation vers la sélection des niveaux
+                // Navigation vers le Niveau 1 du jeu en français ('fr')
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const GameScreen(
+                      levelNumber: 1,
+                      currentLanguage: 'fr',
+                    ),
+                  ),
+                );
               },
               child: const Text('Commencer le Jeu', style: TextStyle(fontSize: 18, color: Colors.white)),
             ),
