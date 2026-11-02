@@ -80,6 +80,46 @@ class _GameScreenState extends State<GameScreen> {
     }
   }
 
+  // --- LOGIQUE DES INDICES ---
+  void _useFirstLetterHint() {
+    if (userSlots[0] == targetWord[0]) return; // Déjà en place
+
+    setState(() {
+      // Libérer la première case si elle contenait une autre lettre
+      if (userSlots[0] != null) {
+        String oldLetter = userSlots[0]!;
+        for (int i = 0; i < scrambledLetters.length; i++) {
+          if (letterUsedStatus[i] && scrambledLetters[i] == oldLetter) {
+            letterUsedStatus[i] = false;
+            break;
+          }
+        }
+      }
+
+      // Placer la première lettre correcte
+      userSlots[0] = targetWord[0];
+      // Marquer la lettre correspondante comme utilisée dans le clavier
+      for (int i = 0; i < scrambledLetters.length; i++) {
+        if (!letterUsedStatus[i] && scrambledLetters[i] == targetWord[0]) {
+          letterUsedStatus[i] = true;
+          break;
+        }
+      }
+    });
+
+    if (!userSlots.contains(null)) {
+      _checkWord();
+    }
+  }
+
+  void _useWholeWordHint() {
+    setState(() {
+      userSlots = targetWord.split('');
+      letterUsedStatus = List.filled(scrambledLetters.length, true);
+    });
+    _checkWord();
+  }
+
   void _checkWord() {
     String formedWord = userSlots.join('');
     if (formedWord == targetWord) {
@@ -153,6 +193,19 @@ class _GameScreenState extends State<GameScreen> {
       appBar: AppBar(
         title: Text('Niveau ${widget.levelNumber} - ${currentIndex + 1}/${levelCreatures.length}'),
         backgroundColor: const Color(0xFF2E7D32),
+        actions: [
+          // Bouton d'indice rapide dans la barre du haut
+          IconButton(
+            icon: const Icon(Icons.lightbulb_outline),
+            tooltip: '1ère Lettre (1 \$)',
+            onPressed: _useFirstLetterHint,
+          ),
+          IconButton(
+            icon: const Icon(Icons.help_outline),
+            tooltip: 'Mot Complet (2 \$)',
+            onPressed: _useWholeWordHint,
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -160,7 +213,7 @@ class _GameScreenState extends State<GameScreen> {
           children: [
             // 1. Image de la créature
             Container(
-              height: 220,
+              height: 200,
               width: double.infinity,
               decoration: BoxDecoration(
                 color: Colors.grey[300],
@@ -171,7 +224,26 @@ class _GameScreenState extends State<GameScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 15),
+
+            // Barre de tarification des indices affichée à l'utilisateur
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TextButton.icon(
+                  onPressed: _useFirstLetterHint,
+                  icon: const Icon(Icons.lightbulb, color: Colors.amber, size: 16),
+                  label: const Text('Indice 1ère Lettre : 1 \$', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                ),
+                const SizedBox(width: 15),
+                TextButton.icon(
+                  onPressed: _useWholeWordHint,
+                  icon: const Icon(Icons.lock_open, color: Colors.green, size: 16),
+                  label: const Text('Mot Complet : 2 \$', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 15),
 
             // 2. Cases vides interactives pour l'assemblage des lettres
             Wrap(
@@ -202,7 +274,7 @@ class _GameScreenState extends State<GameScreen> {
                 );
               }),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 30),
 
             // 3. Clavier interactif de lettres mélangées
             Expanded(
