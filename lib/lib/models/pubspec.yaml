@@ -19,6 +19,8 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  # Déclaration du dossier d'images pour que le jeu puisse les afficher
+  # Déclaration directe des images à la racine
   assets:
-    - assets/images/
+    - Aigle.jpg
+    - Dauphin.jpg
+    - Lion.jpg
