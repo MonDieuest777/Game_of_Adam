@@ -1,11 +1,10 @@
 import '../models/creature.dart';
 
 class GameData {
-  // Liste des créatures de la Création avec leurs noms traduits dans les 6 langues
   static final List<Creature> allCreatures = [
     Creature(
       id: 'c1',
-      imagePath: 'assets/images/lion.jpg',
+      imagePath: 'Lion.jpg', // Directement à la racine
       names: {
         'fr': 'LION',
         'en': 'LION',
@@ -19,7 +18,7 @@ class GameData {
     ),
     Creature(
       id: 'c2',
-      imagePath: 'assets/images/aigle.jpg',
+      imagePath: 'Aigle.jpg', // Directement à la racine
       names: {
         'fr': 'AIGLE',
         'en': 'EAGLE',
@@ -33,7 +32,7 @@ class GameData {
     ),
     Creature(
       id: 'c3',
-      imagePath: 'assets/images/dauphin.jpg',
+      imagePath: 'Dauphin.jpg', // Directement à la racine
       names: {
         'fr': 'DAUPHIN',
         'en': 'DOLPHIN',
@@ -47,10 +46,9 @@ class GameData {
     ),
   ];
 
-  // Méthode pour récupérer les créatures d'un niveau spécifique en mélangeant les genres
   static List<Creature> getCreaturesForLevel(int levelNumber) {
     List<Creature> filtered = allCreatures.where((c) => c.difficultyLevel == levelNumber).toList();
-    filtered.shuffle(); // Mélange aléatoire pour varier l'ordre d'apparition
+    filtered.shuffle();
     return filtered;
   }
 }
