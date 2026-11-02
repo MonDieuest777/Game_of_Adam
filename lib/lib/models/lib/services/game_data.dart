@@ -4,7 +4,7 @@ class GameData {
   static final List<Creature> allCreatures = [
     Creature(
       id: 'c1',
-      imagePath: 'Lion.jpg', // Directement à la racine
+      imagePath: 'assets/images/Lion.jpg',
       names: {
         'fr': 'LION',
         'en': 'LION',
@@ -18,7 +18,7 @@ class GameData {
     ),
     Creature(
       id: 'c2',
-      imagePath: 'Aigle.jpg', // Directement à la racine
+      imagePath: 'assets/images/Aigle.jpg',
       names: {
         'fr': 'AIGLE',
         'en': 'EAGLE',
@@ -32,7 +32,7 @@ class GameData {
     ),
     Creature(
       id: 'c3',
-      imagePath: 'Dauphin.jpg', // Directement à la racine
+      imagePath: 'assets/images/Dauphin.jpg',
       names: {
         'fr': 'DAUPHIN',
         'en': 'DOLPHIN',
