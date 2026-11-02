@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 import '../models/creature.dart';
 import '../services/game_data.dart';
 
@@ -20,16 +21,120 @@ class _GameScreenState extends State<GameScreen> {
   late List<Creature> levelCreatures;
   int currentIndex = 0;
   
+  String targetWord = '';
+  List<String> scrambledLetters = [];
+  List<String?> userSlots = [];
+  List<bool> letterUsedStatus = [];
+
   @override
   void initState() {
     super.initState();
-    // Charge les créatures pour ce niveau
     levelCreatures = GameData.getCreaturesForLevel(widget.levelNumber);
+    _loadCurrentCreature();
+  }
+
+  void _loadCurrentCreature() {
+    if (levelCreatures.isNotEmpty && currentIndex < levelCreatures.length) {
+      Creature creature = levelCreatures[currentIndex];
+      targetWord = creature.getName(widget.currentLanguage).toUpperCase();
+      userSlots = List.filled(targetWord.length, null);
+      
+      // Mélanger les lettres du mot cible pour le clavier
+      List<String> letters = targetWord.split('');
+      letters.shuffle(Random());
+      scrambledLetters = letters;
+      letterUsedStatus = List.filled(scrambledLetters.length, false);
+    }
+  }
+
+  void _onLetterTap(int index) {
+    if (letterUsedStatus[index]) return;
+
+    // Trouver la première case vide
+    int emptyIndex = userSlots.indexOf(null);
+    if (emptyIndex != -1) {
+      setState(() {
+        userSlots[emptyIndex] = scrambledLetters[index];
+        letterUsedStatus[index] = true;
+      });
+
+      // Si toutes les cases sont remplies, on vérifie automatiquement
+      if (!userSlots.contains(null)) {
+        _checkWord();
+      }
+    }
+  }
+
+  void _onSlotTap(int slotIndex) {
+    if (userSlots[slotIndex] != null) {
+      String letterToRemove = userSlots[slotIndex]!;
+      for (int i = 0; i < scrambledLetters.length; i++) {
+        if (letterUsedStatus[i] && scrambledLetters[i] == letterToRemove) {
+          setState(() {
+            letterUsedStatus[i] = false;
+            userSlots[slotIndex] = null;
+          });
+          break;
+        }
+      }
+    }
+  }
+
+  void _checkWord() {
+    String formedWord = userSlots.join('');
+    if (formedWord == targetWord) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✨ Magnifique ! Nom de la créature validé !'),
+          backgroundColor: Color(0xFF2E7D32),
+          duration: Duration(seconds: 1),
+        ),
+      );
+
+      Future.delayed(const Duration(seconds: 1), () {
+        if (!mounted) return;
+        setState(() {
+          currentIndex++;
+          if (currentIndex < levelCreatures.length) {
+            _loadCurrentCreature();
+          } else {
+            _showLevelCompletedDialog();
+          }
+        });
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('❌ Ce n\'est pas tout à fait ça, réessaie !'),
+          backgroundColor: Colors.redAccent,
+          duration: Duration(milliseconds: 800),
+        ),
+      );
+    }
+  }
+
+  void _showLevelCompletedDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Niveau Terminé ! 🎉'),
+        content: const Text('Tu as nommé avec succès toutes les créatures de ce niveau. Gloire à l\'Œuvre de la Création !'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).pop();
+            },
+            child: const Text('Terminer'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Si le niveau n'a pas encore de créatures configurées
     if (levelCreatures.isEmpty) {
       return Scaffold(
         appBar: AppBar(
@@ -37,20 +142,16 @@ class _GameScreenState extends State<GameScreen> {
           backgroundColor: const Color(0xFF2E7D32),
         ),
         body: const Center(
-          child: Text(
-            'Créatures en cours de chargement pour ce niveau...',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
+          child: Text('Aucune créature configurée pour ce niveau.'),
         ),
       );
     }
 
     Creature currentCreature = levelCreatures[currentIndex];
-    String targetWord = currentCreature.getName(widget.currentLanguage);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Niveau ${widget.levelNumber} - Créature ${currentIndex + 1}/${levelCreatures.length}'),
+        title: Text('Niveau ${widget.levelNumber} - ${currentIndex + 1}/${levelCreatures.length}'),
         backgroundColor: const Color(0xFF2E7D32),
       ),
       body: Padding(
@@ -59,7 +160,7 @@ class _GameScreenState extends State<GameScreen> {
           children: [
             // 1. Image de la créature
             Container(
-              height: 250,
+              height: 220,
               width: double.infinity,
               decoration: BoxDecoration(
                 color: Colors.grey[300],
@@ -67,37 +168,35 @@ class _GameScreenState extends State<GameScreen> {
                 image: DecorationImage(
                   image: AssetImage(currentCreature.imagePath),
                   fit: BoxFit.cover,
-                  onError: (exception, stackTrace) {
-                    // Gestion de secours si l'image locale n'est pas encore téléversée
-                  },
-                ),
-              ),
-              child: Center(
-                child: Text(
-                  currentCreature.imagePath,
-                  style: const TextStyle(color: Colors.black45, fontSize: 12),
                 ),
               ),
             ),
             const SizedBox(height: 30),
 
-            // 2. Cases vides pour l'assemblage des lettres du mot cible
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            // 2. Cases vides interactives pour l'assemblage des lettres
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
               children: List.generate(targetWord.length, (index) {
-                return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: 40,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: const Color(0xFF2E7D32), width: 2),
-                    borderRadius: BorderRadius.circular(8),
-                    color: Colors.white,
-                  ),
-                  child: const Center(
-                    child: Text(
-                      '',
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                return GestureDetector(
+                  onTap: () => _onSlotTap(index),
+                  child: Container(
+                    width: 45,
+                    height: 55,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: const Color(0xFF2E7D32), width: 2),
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.white,
+                    ),
+                    child: Center(
+                      child: Text(
+                        userSlots[index] ?? '',
+                        style: const TextStyle(
+                          fontSize: 24, 
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2E7D32),
+                        ),
+                      ),
                     ),
                   ),
                 );
@@ -105,13 +204,31 @@ class _GameScreenState extends State<GameScreen> {
             ),
             const SizedBox(height: 40),
 
-            // 3. Clavier interactif pour le joueur
-            const Expanded(
+            // 3. Clavier interactif de lettres mélangées
+            Expanded(
               child: Center(
-                child: Text(
-                  'Clavier d\'assemblage des lettres en cours d\'initialisation...',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+                child: Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  alignment: WrapAlignment.center,
+                  children: List.generate(scrambledLetters.length, (index) {
+                    bool isUsed = letterUsedStatus[index];
+                    return ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isUsed ? Colors.grey[400] : const Color(0xFF2E7D32),
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(50, 50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: isUsed ? null : () => _onLetterTap(index),
+                      child: Text(
+                        scrambledLetters[index],
+                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                      ),
+                    );
+                  }),
                 ),
               ),
             ),
@@ -121,4 +238,3 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 }
-
